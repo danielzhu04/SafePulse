@@ -165,6 +165,9 @@ func (server *Server) request_safewalk(w http.ResponseWriter, req *http.Request)
 			"safewalker":  best_safewalker.Session_ID,
 			"distance_km": minDist,
 			"match_code": random_code,
+			"safewalker_lat": best_safewalker.Latest_Location.Lat, 
+			"safewalker_lng": best_safewalker.Latest_Location.Lng, 
+			"safewalker_label": best_safewalker.Latest_Location.Label, 
 		});
 		best_safewalker.available = false
 		best_safewalker.random_code = random_code
@@ -257,6 +260,9 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 					json.NewEncoder(w).Encode(map[string]interface{}{
 						"success":     true,
 						"matching_status": true, 
+						"safewalker_lat": safewalker.Latest_Location.Lat, 
+						"safewalker_lng": safewalker.Latest_Location.Lng, 
+						"safewalker_label": safewalker.Latest_Location.Label, 
 					})
 				}
 			} else {
@@ -264,7 +270,7 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 				server.SafewalkersInfo.m[session_id] = safewalker
 				
 				isAssigned := safewalker.Student_latest_location != Location{}
-				fmt.Printf("DEBUG: StatusUpdate for %s. isAssigned: %v. StudentLoc: %+v\n", session_id, isAssigned, safewalker.Student_latest_location)
+				fmt.Printf("DEBUG: StatusUpdate for %s. isAssigned: %v. StudentLoc: %+v, is student: %v\n", session_id, isAssigned, safewalker.Student_latest_location, is_student)
 				studentLat := 0.0
 				studentLng := 0.0
 				studentLabel := ""

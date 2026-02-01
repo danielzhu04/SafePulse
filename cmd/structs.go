@@ -10,7 +10,7 @@ type Safewalker struct {
 	Student_latest_location Location
 	Student_destination_location Location 
 	random_code int
-	code_matched bool
+	code_matched bool 
 }
 
 type Location struct {

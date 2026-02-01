@@ -70,13 +70,3 @@ npm install
 npx expo start
 ```
 Scan the QR code with your phone to start the proper hackathon demo!
-
-## 🔮 Future Roadmap
-
--   **WebSocket Integration**: Upgrading from polling to WebSockets for true bi-directional real-time communication.
--   **Predictive Routing**: Using historical data to suggest the safest, well-lit routes.
--   **Emergency Integration**: One-tap connection to campus police or emergency services.
-
----
-
-*Built with ❤️ for HackAtBrown 2026*

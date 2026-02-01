@@ -169,6 +169,7 @@ func (server *Server) request_safewalk(w http.ResponseWriter, req *http.Request)
 		best_safewalker.available = false
 		best_safewalker.random_code = random_code
 		server.SafewalkersInfo.m[best_safewalker.Session_ID] = *best_safewalker
+		fmt.Printf("DEBUG: Assigning student to %s. MatchCode: %d\n", best_safewalker.Session_ID, random_code)
 	}
 }
 
@@ -263,6 +264,7 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 				server.SafewalkersInfo.m[session_id] = safewalker
 				
 				isAssigned := safewalker.Student_latest_location != Location{}
+				fmt.Printf("DEBUG: StatusUpdate for %s. isAssigned: %v. StudentLoc: %+v\n", session_id, isAssigned, safewalker.Student_latest_location)
 				studentLat := 0.0
 				studentLng := 0.0
 				studentLabel := ""

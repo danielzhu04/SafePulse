@@ -1,90 +1,82 @@
-# SafePulse
+# SafePulse 🛡️
 
-SafePulse is a safety-focused application designed to connect students with "Safewalkers" for secure campus matching and location tracking. This monorepo contains both the frontend React Native mobile application and the backend Go server.
+**SafePulse** is an advanced campus safety platform connecting students with trusted "Safewalkers" for secure, monitored walking companions. Built on a high-performance Go backend and a sleek React Native frontend, SafePulse reimagine personal safety with real-time location tracking, intelligent matching algorithms, and secure verification protocols.
 
-## Project Structure
+---
+
+## 🚀 The Mission
+
+Walking home alone at night shouldn't be stressful. SafePulse provides peace of mind by instantly bridging the gap between students and safety resources. Whether it's a late-night library session or an off-campus event, SafePulse ensures no one has to walk alone.
+
+## ✨ Key Features
+
+-   **📍 Real-Time Location Intelligence**: Utilizing the **Overpass API** and OpenStreetMap data, SafePulse doesn't just track coordinates—it understands campus geography.
+-   **🤝 Smart Matching Engine**: A custom Go-based algorithm instantly finds the optimal Safewalker based on proximity and improved availability metrics, minimizing wait times.
+-   **🔐 Secure Handshake**: A unique, randomly generated 4-digit match code ensures students connect with the *right* Safewalker, preventing impersonation.
+-   **🔄 Live Status Synchronization**: High-frequency polling and state management keep both parties perfectly in sync, updating locations and status changes in milliseconds.
+-   **📱 Cross-Platform Experience**: A unified React Native experience that feels native on both iOS and Android.
+
+## 🛠️ Technology Stack
+
+We leveraged a modern, scalable stack to ensure reliability and speed:
+
+### **Backend (The Powerhouse)**
+-   **Language**: [Go (Golang)](https://go.dev/) - Chosen for its incredible concurrency and raw performance.
+-   **Geography**: [Overpass API](https://wiki.openstreetmap.org/wiki/Overpass_API) - For intelligent mapping and routing data.
+-   **Architecture**: RESTful API with optimized in-memory state management for lightning-fast matching.
+
+### **Frontend (The Experience)**
+-   **Framework**: [React Native](https://reactnative.dev/) with [Expo](https://expo.dev/) - For a seamless, beautiful mobile UI.
+-   **Maps**: `react-native-maps` integration for fluid, interactive map views.
+-   **Cloud**: **AWS Amplify** for robust backend configuration and potential cloud scaling.
+
+## 📂 Project Structure
 
 ```
 SafePulse/
-├── frontend/   # React Native Expo application
-└── backend/    # Go server and API
+├── 📱 frontend/      # React Native Mobile Application
+│   ├── src/          # Components, Hooks, Navigation
+│   ├── assets/       # Images and Icons
+│   └── ...
+└── ⚙️ backend/       # Go Server
+    ├── cmd/          # Main application entry point
+    ├── server/       # Server logic (structs, handlers)
+    └── Makefile      # Build automation
 ```
 
-## Features
+## ⚡ Getting Started
 
-- **Real-time Location Tracking**: Track start and end locations for safe walks.
-- **Safewalker Matching**: Algorithm to find the nearest available safewalker.
-- **Secure Verification**: Matching codes to ensure the correct student meets the correct safewalker.
-- **Status Updates**: Real-time status polling for ride/walk progress.
+### Prerequisites
+-   **Go** (v1.20+)
+-   **Node.js** (v18+) & **npm**
+-   **Expo Go** on your mobile device
 
-## Prerequisites
+### 1. Launch the Backend
+The Go backend handles the heavy lifting of matching logic and state.
 
-- **Node.js** (v18 or later recommended)
-- **Go** (v1.20 or later recommended)
-- **Expo Go** app on your mobile device (iOS/Android) or a simulator.
-- **Git**
+```bash
+cd backend
+go mod tidy
+make run
+# Server starts on :8090
+```
 
-## Getting Started
+### 2. Launch the App
+The frontend interface for Students and Safewalkers.
 
-### 1. Backend Setup
+```bash
+cd frontend
+npm install
+npx expo start
+```
+Scan the QR code with your phone to start the proper hackathon demo!
 
-The backend is built with Go and handles user registration, safewalker matching, and location updates.
+## 🔮 Future Roadmap
 
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
+-   **WebSocket Integration**: Upgrading from polling to WebSockets for true bi-directional real-time communication.
+-   **Predictive Routing**: Using historical data to suggest the safest, well-lit routes.
+-   **Emergency Integration**: One-tap connection to campus police or emergency services.
 
-2.  Install dependencies (if needed):
-    ```bash
-    go mod tidy
-    ```
+---
 
-3.  Run the server:
-    You can use the provided Makefile:
-    ```bash
-    make run
-    ```
-    Or run the Go command directly:
-    ```bash
-    go run cmd/main.go
-    ```
-
-    The server will start on port `8090`.
-
-### 2. Frontend Setup
-
-The frontend is a React Native app built with Expo.
-
-1.  Navigate to the frontend directory:
-    ```bash
-    cd frontend
-    ```
-
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-
-3.  Start the application:
-    ```bash
-    npx expo start
-    ```
-
-4.  **Run on Device**:
-    - Scan the QR code with the **Expo Go** app on your Android or iOS device.
-    - Press `i` to run on an iOS simulator (macOS only).
-    - Press `a` to run on an Android emulator.
-
-## Configuration
-
-- **API Endpoints**: Ensure the frontend is configured to point to your local backend (usually `http://localhost:8090` or your machine's local IP address if testing on a physical device). Check `frontend/src/config.ts` or similar files for API URL settings.
-- **AWS Amplify**: The project uses AWS Amplify (`amplify/` directory). Ensure you have the necessary AWS credentials and configuration if you plan to deploy or use cloud features.
-
-## Contributing
-
-1.  Fork the repository.
-2.  Create a feature branch (`git checkout -b feature/amazing-feature`).
-3.  Commit your changes (`git commit -m 'Add some amazing feature'`).
-4.  Push to the branch (`git push origin feature/amazing-feature`).
-5.  Open a Pull Request.
+*Built with ❤️ for HackAtBrown 2026*

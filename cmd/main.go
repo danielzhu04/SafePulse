@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand/v2"
 	"net/http"
 	"strconv"
 )
@@ -58,12 +59,11 @@ func (server *Server) parse_safewalker(req *http.Request) (Safewalker, error) {
 	// Get info from JSON sent by frontend 
 	name := req.URL.Query().Get("name")
 	session_id := req.URL.Query().Get("sid")
-	sw_listening_addr := req.URL.Query().Get("listening_addr")
 	sw_curr_location, err := server.parse_location(req.URL.Query().Get("label"), req.URL.Query().Get("lat"), req.URL.Query().Get("long")) 
 	if err != nil {
 		return Safewalker{}, errors.New(err.Error())
 	}
-	new_safewalker := Safewalker{Name: name, Session_ID: session_id, Listening_Addr: sw_listening_addr, Latest_Location: sw_curr_location, available: true}
+	new_safewalker := Safewalker{Name: name, Session_ID: session_id, Latest_Location: sw_curr_location, available: true, Student_latest_location: Location{}, Student_destination_location: Location{}}
 	return new_safewalker, nil
 }
 
@@ -102,79 +102,12 @@ func (server *Server) deregister_safewalker(w http.ResponseWriter, req *http.Req
 	fmt.Println("== safewalker out! ", server.SafewalkersInfo.m)
 }
 
-// func (server *Server) poll_safewalker_locations() error {
-// 	for _, safewalker := range server.SafewalkersInfo.m {
-// 		server.poll_safewalker_location(safewalker.Session_ID)
-// 	}
-// 	return nil
-// }
- 
-
-// func (server *Server) poll_safewalker_location(key string) error {
-// 	// LOCK MAP UPON USAGE
-// 	safewalker := server.SafewalkersInfo.m[key]
-// 		poll_url := "http://" + safewalker.Listening_Addr + "/get-location"
-// 		// fmt.Println("polling url: ", poll_url)
-// 		// Make request
-// 		res, err := http.Get(poll_url)
-// 		// fmt.Println("res: ", res, err)
-// 		if err != nil {
-// 			return errors.New(err.Error())
-// 		}
-// 		defer res.Body.Close() 
-// 		// Read out content
-// 		if res.StatusCode == http.StatusOK {
-// 			body, err := io.ReadAll(res.Body)
-// 			fmt.Println("BODY: ", body)
-// 			if err != nil {
-// 				return errors.New(err.Error())
-// 			} else {
-// 				// Convert the byte slice to a string if needed
-// 				var new_location Location
-// 				err = json.Unmarshal(body, &new_location)
-// 				if err != nil {
-// 					return errors.New(err.Error())
-// 				}
-// 				fmt.Println("NEW LOCATION: ", new_location)
-// 				fmt.Println("safewalker ", safewalker)
-
-// 				// Update location
-// 				safewalker.Latest_Location = new_location
-// 				server.SafewalkersInfo.m[key] = safewalker
-// 			}
-// 		} else {
-// 			// error_str := "Response code not ok " + strconv.Itoa(res.StatusCode)
-// 			return errors.New("")
-// 		}
-// 		return nil
-// }
-
-// func (server *Server) send_safewalker_assignment(safewalker *Safewalker, student_location Location, student_destination Location) error {
-// 	url := &url.URL{
-// 		Scheme: "http",
-// 		Host:   safewalker.Listening_Addr,
-// 		Path:   "/match",
-// 	}
-// 	query := url.Query()
-// 	query.Set("pickup_lat", strconv.FormatFloat(*student_location.Lat, 'f', -1, 64))
-// 	query.Set("pickup_lng", strconv.FormatFloat(*student_location.Lng, 'f', -1, 64))
-// 	query.Set("dest_lat", strconv.FormatFloat(*student_destination.Lat, 'f', -1, 64))
-// 	query.Set("dest_lng", strconv.FormatFloat(*student_destination.Lng, 'f', -1, 64))
-// 	url.RawQuery = query.Encode() 
-
-// 	response, err := http.Get(url.String())
-// 	if err != nil {
-// 		return errors.New(err.Error())
-// 	}
-// 	defer response.Body.Close()
-
-// 	// Check if the request was successful (status code 200 OK)
-// 	if response.StatusCode != http.StatusOK {
-// 		return errors.New("")
-// 	}
-
-// 	return nil
-// }
+func (server *Server) generate_random_code() int {
+	min := 1000
+    max := 10000 // Upper bound is exclusive in rand.IntN
+    randomNumber := rand.IntN(max - min) + min
+	return randomNumber
+}
 
 func (server *Server) request_safewalk(w http.ResponseWriter, req *http.Request) {
 	server.SafewalkersInfo.mu.Lock()
@@ -217,7 +150,6 @@ func (server *Server) request_safewalk(w http.ResponseWriter, req *http.Request)
 		}
 	}
 
-
 	// Finish matching
 	if best_safewalker == nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -225,20 +157,20 @@ func (server *Server) request_safewalk(w http.ResponseWriter, req *http.Request)
 			"error":   "No safewalkers available",
 		})
 	} else {
-		// server.send_safewalker_assignment(best_safewalker, body.Pickup, body.Destination)
 		best_safewalker.Student_latest_location = pickup_location
 		best_safewalker.Student_destination_location = destination_location
+		random_code := server.generate_random_code() 
 
 		// Send back to student their safewalker's assignment. 
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success":     true,
 			"safewalker":  best_safewalker.Session_ID,
 			"distance_km": minDist,
+			"match_code": random_code,
 		});
 		best_safewalker.available = false
+		best_safewalker.random_code = random_code
 		server.SafewalkersInfo.m[best_safewalker.Session_ID] = *best_safewalker
-		// begin thread for safewalk session 
-		
 	}
 }
 
@@ -251,8 +183,45 @@ func (server *Server) finish_request(w http.ResponseWriter, req *http.Request) {
 	var safewalker Safewalker
 	safewalker, ok := server.SafewalkersInfo.m[session_id]
 	if ok {
+		safewalker.Student_latest_location = Location{}
+		safewalker.Student_destination_location = Location{}
+		safewalker.code_matched = false
+		safewalker.random_code = 0
 		safewalker.available = true
 		server.SafewalkersInfo.m[session_id] = safewalker
+	}
+}
+
+func (server *Server) checkcode(w http.ResponseWriter, req *http.Request) {
+	server.SafewalkersInfo.mu.Lock()
+	defer server.SafewalkersInfo.mu.Unlock()
+	
+	session_id := req.URL.Query().Get("sid")
+	code, err := strconv.Atoi(req.URL.Query().Get("code"))
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success":     false,
+		});
+	} else {
+		var safewalker Safewalker
+		safewalker, ok := server.SafewalkersInfo.m[session_id]
+		if ok {
+			if code != safewalker.random_code {
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"success":     false,
+			});
+			}
+			safewalker.code_matched = true
+			server.SafewalkersInfo.m[session_id] = safewalker
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success":     true,
+			});
+			return 
+		}
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success":     false,
+		});
 	}
 }
 
@@ -275,29 +244,29 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 			if (is_student == "true" || is_student == "True") {
 				safewalker.Student_latest_location = curr_location
 				server.SafewalkersInfo.m[session_id] = safewalker
-				if (safewalker.Student_latest_location == Location{}) {
+				if (safewalker.Student_latest_location == Location{} || safewalker.code_matched == false) {
 					json.NewEncoder(w).Encode(map[string]interface{}{
 						"success":     true,
-						"safewalker_status": false, 
+						"matching_status": false, 
 					})
 				} else {
 					json.NewEncoder(w).Encode(map[string]interface{}{
 						"success":     true,
-						"safewalker_status": true, 
+						"matching_status": true, 
 					})
 				}
 			} else {
 				safewalker.Latest_Location = curr_location
 				server.SafewalkersInfo.m[session_id] = safewalker
-				if (safewalker.Student_latest_location == Location{}) {
+				if (safewalker.Student_latest_location == Location{} || safewalker.code_matched == false) {
 					json.NewEncoder(w).Encode(map[string]interface{}{
 						"success":     true,
-						"student_status": false, 
+						"matching_status": false, 
 					})
 				} else {
 					json.NewEncoder(w).Encode(map[string]interface{}{
 						"success":     true,
-						"student_status": true, 
+						"matching_status": true, 
 					})
 				}
 			}
@@ -307,16 +276,19 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 		if ok {
 			safewalker.Student_latest_location = Location{}
 			safewalker.Student_destination_location = Location{}
+			safewalker.code_matched = false
+			safewalker.random_code = 0
+			safewalker.available = true
 			server.SafewalkersInfo.m[session_id] = safewalker
 			if (is_student == "true" || is_student == "True") {
 				json.NewEncoder(w).Encode(map[string]interface{}{
-					"success":     true,
-					"safewalker_status": false, 
+					"success": true,
+					"matching_status": false, 
 				})
 			} else {
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"success":     true,
-					"student_status": false, 
+					"matching_status": false, 
 				})
 			}
 		}
@@ -334,6 +306,6 @@ func main() {
     http.HandleFunc("/request-safewalk", server.request_safewalk)
 	http.HandleFunc("/finish-request", server.finish_request) // from safewalker
 	http.HandleFunc("/status-update", server.status_update) // from safewalker
-	
+	http.HandleFunc("/checkcode", server.checkcode) 
     http.ListenAndServe(":8090", nil)
 }

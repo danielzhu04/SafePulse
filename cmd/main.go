@@ -257,12 +257,20 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 						"matching_status": false, 
 					})
 				} else {
+					// Return Safewalker Location and Code to Student
+					swLat := 0.0
+					swLng := 0.0
+					if safewalker.Latest_Location.Lat != nil {
+						swLat = *safewalker.Latest_Location.Lat
+						swLng = *safewalker.Latest_Location.Lng
+					}
+					
 					json.NewEncoder(w).Encode(map[string]interface{}{
-						"success":     true,
-						"matching_status": true, 
-						"safewalker_lat": safewalker.Latest_Location.Lat, 
-						"safewalker_lng": safewalker.Latest_Location.Lng, 
-						"safewalker_label": safewalker.Latest_Location.Label, 
+						"success":          true,
+						"matching_status":  true,
+						"safewalker_lat":   swLat,
+						"safewalker_lng":   swLng,
+						"match_code":       safewalker.random_code,
 					})
 				}
 			} else {

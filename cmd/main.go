@@ -157,7 +157,8 @@ func (server *Server) request_safewalk(w http.ResponseWriter, req *http.Request)
 	} else {
 		best_safewalker.Student_latest_location = pickup_location
 		best_safewalker.Student_destination_location = destination_location
-		random_code := server.generate_random_code() 
+		random_code := server.generate_random_code()
+		fmt.Println("!!!!!!safewalker matched location ", best_safewalker.Latest_Location) 
 
 		// Send back to student their safewalker's assignment. 
 		json.NewEncoder(w).Encode(map[string]interface{}{
@@ -249,12 +250,23 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 		safewalker, ok := server.SafewalkersInfo.m[session_id]
 		if ok {
 			if (is_student == "true" || is_student == "True") {
+				fmt.Println("polling: ", is_student)
+				fmt.Printf("DEBUG: StatusUpdate for %s. isAssigned: %v. StudentLoc: %+v, safewalker location %+v, is student: %v\n", session_id, status, safewalker.Student_latest_location, safewalker.Latest_Location, is_student)
 				safewalker.Student_latest_location = curr_location
 				server.SafewalkersInfo.m[session_id] = safewalker
 				if (safewalker.Student_latest_location == Location{} || safewalker.code_matched == false) {
+					swLat := 0.0
+					swLng := 0.0
+					if safewalker.Latest_Location.Lat != nil {
+						swLat = *safewalker.Latest_Location.Lat
+						swLng = *safewalker.Latest_Location.Lng
+					}
 					json.NewEncoder(w).Encode(map[string]interface{}{
 						"success":     true,
-						"matching_status": false, 
+						"matching_status": false,
+						"safewalker_lat":   swLat,
+						"safewalker_lng":   swLng, 
+						"match_code":       safewalker.random_code,
 					})
 				} else {
 					// Return Safewalker Location and Code to Student
@@ -278,7 +290,7 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 				server.SafewalkersInfo.m[session_id] = safewalker
 				
 				isAssigned := safewalker.Student_latest_location != Location{}
-				fmt.Printf("DEBUG: StatusUpdate for %s. isAssigned: %v. StudentLoc: %+v, is student: %v\n", session_id, isAssigned, safewalker.Student_latest_location, is_student)
+				fmt.Printf("DEBUG: StatusUpdate for %s. isAssigned: %v. StudentLoc: %+v, safewalker LOC: %+v, is student: %v\n", session_id, isAssigned, safewalker.Student_latest_location, safewalker.Latest_Location, is_student)
 				studentLat := 0.0
 				studentLng := 0.0
 				studentLabel := ""
@@ -307,12 +319,14 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 			if (is_student == "true" || is_student == "True") {
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"success": true,
-					"matching_status": false, 
+					"matching_status": false,
+					"cancel": true,
 				})
 			} else {
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"success":     true,
-					"matching_status": false, 
+					"matching_status": false,
+					"cancel": true,
 				})
 			}
 		}

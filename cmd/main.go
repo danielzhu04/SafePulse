@@ -261,17 +261,26 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 			} else {
 				safewalker.Latest_Location = curr_location
 				server.SafewalkersInfo.m[session_id] = safewalker
-				if (safewalker.Student_latest_location == Location{} || safewalker.code_matched == false) {
-					json.NewEncoder(w).Encode(map[string]interface{}{
-						"success":     true,
-						"matching_status": false, 
-					})
-				} else {
-					json.NewEncoder(w).Encode(map[string]interface{}{
-						"success":     true,
-						"matching_status": true, 
-					})
+				
+				isAssigned := safewalker.Student_latest_location != Location{}
+				studentLat := 0.0
+				studentLng := 0.0
+				studentLabel := ""
+
+				if isAssigned && safewalker.Student_latest_location.Lat != nil {
+					studentLat = *safewalker.Student_latest_location.Lat
+					studentLng = *safewalker.Student_latest_location.Lng
+					studentLabel = safewalker.Student_latest_location.Label
 				}
+
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"success":         true,
+					"matching_status": safewalker.code_matched,
+					"is_assigned":     isAssigned,
+					"student_lat":     studentLat,
+					"student_lng":     studentLng,
+					"student_label":   studentLabel,
+				})
 			}
 		}
 	} else {

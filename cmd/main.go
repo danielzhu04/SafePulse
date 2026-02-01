@@ -14,8 +14,6 @@ func hello(w http.ResponseWriter, req *http.Request) {
     fmt.Fprintf(w, "hello\n")
 }
 
-// HELPERS
-
 func overpassQuery(lat, lng float64, radiusMeters int) string {
 	return fmt.Sprintf(`
 [out:json][timeout:25];
@@ -183,11 +181,7 @@ func (server *Server) finish_request(w http.ResponseWriter, req *http.Request) {
 	var safewalker Safewalker
 	safewalker, ok := server.SafewalkersInfo.m[session_id]
 	if ok {
-		safewalker.Student_latest_location = Location{}
-		safewalker.Student_destination_location = Location{}
-		safewalker.code_matched = false
-		safewalker.random_code = 0
-		safewalker.available = true
+		safewalker = server.remove_student(safewalker)
 		server.SafewalkersInfo.m[session_id] = safewalker
 	}
 }
@@ -223,6 +217,15 @@ func (server *Server) checkcode(w http.ResponseWriter, req *http.Request) {
 			"success":     false,
 		});
 	}
+}
+
+func (server *Server) remove_student(safewalker Safewalker) Safewalker {
+	safewalker.Student_latest_location = Location{}
+	safewalker.Student_destination_location = Location{}
+	safewalker.code_matched = false
+	safewalker.random_code = 0
+	safewalker.available = true
+	return safewalker
 }
 
 func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
@@ -274,11 +277,7 @@ func (server *Server) status_update(w http.ResponseWriter, req *http.Request) {
 	} else {
 		safewalker, ok := server.SafewalkersInfo.m[session_id]
 		if ok {
-			safewalker.Student_latest_location = Location{}
-			safewalker.Student_destination_location = Location{}
-			safewalker.code_matched = false
-			safewalker.random_code = 0
-			safewalker.available = true
+			safewalker = server.remove_student(safewalker)
 			server.SafewalkersInfo.m[session_id] = safewalker
 			if (is_student == "true" || is_student == "True") {
 				json.NewEncoder(w).Encode(map[string]interface{}{
